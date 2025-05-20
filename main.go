@@ -193,7 +193,17 @@ func main() {
 }
 
 func extractPrompt(filePath string) (rawText string, parsedJSON string, err error) {
-	et, err := exiftool.NewExiftool()
+	var et *exiftool.Exiftool
+	brewPaths := []string{"/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool"}
+	var opts []func(*exiftool.Exiftool) error
+	for _, p := range brewPaths {
+		if _, statErr := os.Stat(p); statErr == nil {
+			opts = append(opts, exiftool.SetExiftoolBinaryPath(p))
+			break
+		}
+	}
+	// Fallback to whatever is in PATH if no brew copy found:
+	et, err = exiftool.NewExiftool(opts...)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to initialize exiftool: %w", err)
 	}
